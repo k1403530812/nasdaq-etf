@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A股纳斯达克 ETF 溢价率排行</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #1f2933;
+      --muted: #5f6b7a;
+      --line: #d9dee7;
+      --accent: #0b6bcb;
+      --accent-dark: #084f96;
+      --good: #0f8a5f;
+      --bad: #c24130;
+      --warn: #9a6700;
+      --shadow: 0 12px 28px rgba(31, 41, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .top {
+      padding: 22px 0 18px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 34px);
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      max-width: 880px;
+    }
+
+    main {
+      padding: 22px 0 40px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 10px;
+      font: inherit;
+      background: #fff;
+      color: var(--text);
+    }
+
+    input[type="number"] {
+      width: 84px;
+    }
+
+    input[type="text"] {
+      width: min(420px, 100%);
+    }
+
+    button {
+      height: 36px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fff;
+      border-radius: 6px;
+      padding: 0 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+    }
+
+    button.secondary {
+      color: var(--accent);
+      background: #fff;
+    }
+
+    button.secondary:hover {
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+      min-height: 22px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .metric {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 22px;
+    }
+
+    .explain {
+      margin: 14px 0;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      background: #eef6ff;
+      color: #233548;
+    }
+
+    .analysis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .analysis-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .analysis-card h2 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    .analysis-card p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .suggestion {
+      margin: 14px 0;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffaf0;
+      color: #3f3422;
+    }
+
+    .suggestion strong {
+      color: var(--warn);
+    }
+
+    .source-list {
+      margin: 14px 0;
+      padding: 14px 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .source-list h2 {
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 17px;
+    }
+
+    .source-list ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .source-list a {
+      color: var(--accent);
+    }
+
+    .table-shell {
+      overflow: auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      min-width: 920px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f0f3f8;
+      color: #334155;
+      font-weight: 700;
+    }
+
+    th:first-child,
+    td:first-child,
+    th:nth-child(2),
+    td:nth-child(2),
+    th:nth-child(3),
+    td:nth-child(3) {
+      text-align: left;
+    }
+
+    tbody tr:hover {
+      background: #f8fbff;
+    }
+
+    .positive {
+      color: var(--bad);
+      font-weight: 700;
+    }
+
+    .negative {
+      color: var(--good);
+      font-weight: 700;
+    }
+
+    .empty,
+    .error {
+      padding: 22px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .error {
+      color: var(--bad);
+    }
+
+    footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .version {
+      margin-top: 6px;
+    }
+
+    @media (max-width: 760px) {
+      .wrap {
+        width: min(100% - 20px, 1180px);
+      }
+
+      .toolbar,
+      .controls {
+        align-items: stretch;
+      }
+
+      .controls,
+      label,
+      button,
+      input[type="text"] {
+        width: 100%;
+      }
+
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .analysis {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap top">
+      <h1>A股纳斯达克 ETF 溢价率排行</h1>
+      <p class="lead">这个页面会自动获取东方财富 ETF 数据，筛选纳指、纳斯达克、NASDAQ 相关基金，并按溢价率从低到高排列。</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="toolbar" aria-label="刷新控制">
+      <div class="controls">
+        <button id="refreshBtn" type="button">立即刷新</button>
+        <button id="autoBtn" class="secondary" type="button">开启自动刷新</button>
+        <label>
+          间隔秒数
+          <input id="intervalInput" type="number" min="5" step="1" value="15">
+        </label>
+        <label>
+          筛选关键词
+          <input id="keywordInput" type="text" value="纳指,纳斯达克,纳指100,纳斯达克100,NASDAQ,Nasdaq,NDX">
+        </label>
+        <label>
+          指定代码池
+          <input id="codeInput" type="text" value="513300,513390,159659,513100,159501,159513,159632,159941,159660,159509,159696,513110,513870,513290">
+        </label>
+      </div>
+      <div id="status" class="status">等待刷新</div>
+    </section>
+
+    <section class="summary" aria-label="概要">
+      <div class="metric">
+        <span>匹配到的 ETF 数量</span>
+        <strong id="countMetric">--</strong>
+      </div>
+      <div class="metric">
+        <span>最低溢价率</span>
+        <strong id="minMetric">--</strong>
+      </div>
+      <div class="metric">
+        <span>最高溢价率</span>
+        <strong id="maxMetric">--</strong>
+      </div>
+    </section>
+
+    <section class="explain">
+      <strong>怎么看：</strong>
+      溢价率越低，代表场内价格相对参考净值/估值越不贵；溢价率为正，通常表示场内价格高于参考净值/估值。
+      东方财富接口给的是“折价率”，本页面已自动换算为“溢价率 = -折价率”。
+    </section>
+
+    <section class="analysis" aria-label="波动因素分析">
+      <article class="analysis-card">
+        <h2>基本面：盈利</h2>
+        <p id="fundamentalText">刷新后显示。</p>
+      </article>
+      <article class="analysis-card">
+        <h2>政策面：货币 / 监管</h2>
+        <p id="policyText">刷新后显示。</p>
+      </article>
+      <article class="analysis-card">
+        <h2>资金面：流动性</h2>
+        <p id="liquidityText">刷新后显示。</p>
+      </article>
+    </section>
+
+    <section class="suggestion" aria-label="操作观察">
+      <strong>操作观察：</strong>
+      <span id="suggestionText">刷新后显示。</span>
+    </section>
+
+    <section class="source-list" aria-label="分析依据">
+      <h2>分析依据：截至 2026-05-26</h2>
+      <ul>
+        <li>盈利：Nasdaq 相关公开资料显示，纳斯达克 100 一季报盈利仍较强，科技盈利仍是支撑项。</li>
+        <li>政策：<a href="https://www.federalreserve.gov/newsevents/pressreleases/monetary20260429a.htm" target="_blank" rel="noopener">美联储 2026-04-29 FOMC 声明</a>维持联邦基金利率目标区间在 3.50% - 3.75%，后续仍依赖通胀与就业数据。</li>
+        <li>资金：<a href="https://www.haoetf.com/qdii/159941" target="_blank" rel="noopener">HaoETF 的纳指 ETF 页面</a>显示近期仍有溢价风险提示和申赎安排公告；<a href="https://www.stcn.com/article/detail/3720818.html" target="_blank" rel="noopener">证券时报公开报道</a>显示纳斯达克 100 ETF 曾出现成交放量。</li>
+      </ul>
+    </section>
+
+    <section class="table-shell" aria-label="ETF 排行表">
+      <table>
+        <thead>
+          <tr>
+            <th>代码</th>
+            <th>名称</th>
+            <th>跟踪指数</th>
+            <th>最新价</th>
+            <th>涨跌幅</th>
+            <th>成交额</th>
+            <th>折价率</th>
+            <th>溢价率</th>
+            <th>来源 / 时间</th>
+            <th>投资建议</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td class="empty" colspan="10">点击“立即刷新”获取数据</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      数据来自东方财富公开接口，可能有延迟或接口变更。页面仅用于观察，不构成投资建议。
+      <div class="version">页面版本：2026-05-26 18:36，已接入 naKanban 今日纳指 ETF 溢价快照并修复 159501 等缺失数据。</div>
+    </footer>
+  </main>
+
+  <script>
+    const API_BASE = "https://datacenter.eastmoney.com/stock/fundselector/api/data/get";
+    const fields = [
+      "ETF_TYPE_CODE",
+      "SECUCODE",
+      "SECURITY_CODE",
+      "CHANGE_RATE_1W",
+      "CHANGE_RATE_1M",
+      "CHANGE_RATE_3M",
+      "YTD_CHANGE_RATE",
+      "DEC_TOTALSHARE",
+      "DEC_NAV",
+      "SECURITY_NAME_ABBR",
+      "DERIVE_INDEX_CODE",
+      "INDEX_CODE",
+      "INDEX_NAME",
+      "NEW_PRICE",
+      "CHANGE_RATE",
+      "CHANGE",
+      "VOLUME",
+      "DEAL_AMOUNT",
+      "PREMIUM_DISCOUNT_RATIO",
+      "QUANTITY_RELATIVE_RATIO",
+      "HIGH_PRICE",
+      "LOW_PRICE",
+      "STOCK_ID",
+      "PRE_CLOSE_PRICE"
+    ].join(",");
+
+    const DEFAULT_KEYWORDS = ["纳指", "纳斯达克", "纳指100", "纳斯达克100", "NASDAQ", "Nasdaq", "NDX"];
+    const DEFAULT_CODES = ["159501", "159509", "159513", "159632", "159659", "159660", "159696", "159941", "513100", "513110", "513300", "513390", "513870"];
+    const RETIRED_DEFAULT_CODES = ["513290"];
+    const KNOWN_FUNDS = {
+      "513300": { name: "纳斯达克100ETF", indexName: "纳斯达克100" },
+      "513390": { name: "纳指ETF", indexName: "纳斯达克100" },
+      "159659": { name: "纳指100ETF", indexName: "纳斯达克100" },
+      "513100": { name: "纳指ETF", indexName: "纳斯达克100" },
+      "159501": { name: "纳指基金", indexName: "纳斯达克100" },
+      "159513": { name: "纳指大成ETF", indexName: "纳斯达克100" },
+      "159632": { name: "纳斯达克ETF", indexName: "纳斯达克100" },
+      "159941": { name: "纳指ETF", indexName: "纳斯达克100" },
+      "159660": { name: "纳指100ETF", indexName: "纳斯达克100" },
+      "159509": { name: "纳指科技ETF", indexName: "纳斯达克科技" },
+      "159696": { name: "纳指100ETF", indexName: "纳斯达克100" },
+      "513110": { name: "纳指100ETF", indexName: "纳斯达克100" },
+      "513870": { name: "纳指ETF", indexName: "纳斯达克100" },
+      "513290": { name: "纳指生物科技ETF", indexName: "纳斯达克生物科技" }
+    };
+    const HAOETF_SNAPSHOT = {
+      "159501": { name: "嘉实纳指100", indexName: "纳斯达克100", lastPrice: 2.033, changePct: -0.97, amount100M: 1.76, premiumPct: 7.70, asOf: "2026-05-26 14:59", source: "用户截图核验 + naKanban/新浪/基金公司IOPV" },
+      "159509": { name: "纳指科技ETF", indexName: "纳斯达克科技市值加权", lastPrice: 2.661, changePct: -1.55, amount100M: 10.59, premiumPct: 19.93, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "159513": { name: "大成纳指100", indexName: "纳斯达克100", lastPrice: 1.784, changePct: -1.27, amount100M: 1.61, premiumPct: 6.00, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "159632": { name: "华安纳指100", indexName: "纳斯达克100", lastPrice: 2.411, changePct: -1.39, amount100M: 3.34, premiumPct: 5.57, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "159659": { name: "招商纳指100", indexName: "纳斯达克100", lastPrice: 2.298, changePct: -0.99, amount100M: 3.68, premiumPct: 6.07, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "159660": { name: "汇添富纳指100", indexName: "纳斯达克100", lastPrice: 2.327, changePct: -1.23, amount100M: 1.94, premiumPct: 5.88, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "159696": { name: "易方达纳指100", indexName: "纳斯达克100", lastPrice: 2.013, changePct: -0.35, amount100M: 0.99, premiumPct: 7.52, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "159941": { name: "广发纳指100", indexName: "纳斯达克100", lastPrice: 1.614, changePct: -1.88, amount100M: 18.04, premiumPct: 6.91, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "513100": { name: "国泰纳指100", indexName: "纳斯达克100", lastPrice: 2.185, changePct: -2.06, amount100M: 10.34, premiumPct: 8.57, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "513110": { name: "华泰柏瑞纳指", indexName: "纳斯达克100", lastPrice: 2.442, changePct: -1.41, amount100M: 3.29, premiumPct: 5.65, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "513300": { name: "华夏纳指100", indexName: "纳斯达克100", lastPrice: 2.656, changePct: -1.19, amount100M: 6.69, premiumPct: 6.39, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "513390": { name: "博时纳指100", indexName: "纳斯达克100", lastPrice: 2.390, changePct: -1.12, amount100M: 1.78, premiumPct: 5.91, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" },
+      "513870": { name: "富国纳指100", indexName: "纳斯达克100", lastPrice: 2.040, changePct: -0.87, amount100M: 1.63, premiumPct: 6.47, asOf: "2026-05-26 14:59", source: "naKanban/新浪/基金公司IOPV" }
+    };
+
+    const state = {
+      timer: null,
+      auto: false,
+      storageKey: "nasdaqEtfPremiumRankingSettings"
+    };
+
+    const els = {
+      tbody: document.getElementById("tbody"),
+      status: document.getElementById("status"),
+      refreshBtn: document.getElementById("refreshBtn"),
+      autoBtn: document.getElementById("autoBtn"),
+      intervalInput: document.getElementById("intervalInput"),
+      keywordInput: document.getElementById("keywordInput"),
+      codeInput: document.getElementById("codeInput"),
+      countMetric: document.getElementById("countMetric"),
+      minMetric: document.getElementById("minMetric"),
+      maxMetric: document.getElementById("maxMetric"),
+      fundamentalText: document.getElementById("fundamentalText"),
+      policyText: document.getElementById("policyText"),
+      liquidityText: document.getElementById("liquidityText"),
+      suggestionText: document.getElementById("suggestionText")
+    };
+
+    function buildUrl(callbackName, mode = "all") {
+      const isTplus = mode === "tplus";
+      const params = new URLSearchParams({
+        type: "RPTA_APP_FUNDSELECT",
+        sty: fields,
+        source: "FUND_SELECTOR",
+        client: "APP",
+        sr: isTplus ? "-1,1" : "-1,-1,1",
+        st: isTplus ? "CHANGE_RATE,SECURITY_CODE" : "CHANGE_RATE,CHANGE,SECURITY_CODE",
+        filter: isTplus ? '(ETF_TYPE_CODE="ALL")(|IS_TPLUS="1")' : '(ETF_TYPE_CODE="ALL")',
+        p: "1",
+        ps: isTplus ? "1000" : "2000",
+        extraCols: "",
+        isIndexFilter: "1"
+      });
+
+      if (callbackName) {
+        params.set("callback", callbackName);
+      }
+
+      return `${API_BASE}?${params.toString()}`;
+    }
+
+    function toNumber(value) {
+      if (value === null || value === undefined || value === "" || value === "-") {
+        return null;
+      }
+
+      const number = Number(value);
+      return Number.isFinite(number) ? number : null;
+    }
+
+    function formatPct(value) {
+      if (value === null) {
+        return "--";
+      }
+      return `${value.toFixed(2)}%`;
+    }
+
+    function formatNumber(value, digits = 3) {
+      if (value === null) {
+        return "--";
+      }
+      return value.toFixed(digits);
+    }
+
+    function formatAmount(value) {
+      const number = toNumber(value);
+      if (number === null) {
+        return "--";
+      }
+      return `${(number / 100000000).toFixed(2)}亿`;
+    }
+
+    function getKeywords() {
+      return els.keywordInput.value
+        .split(/[,，\s]+/)
+        .map(item => item.trim())
+        .filter(Boolean);
+    }
+
+    function getCodes() {
+      return els.codeInput.value
+        .split(/[,，\s]+/)
+        .map(item => item.trim())
+        .filter(Boolean);
+    }
+
+    function mergeUnique(left, right) {
+      const seen = new Set();
+      return [...left, ...right]
+        .map(item => String(item).trim())
+        .filter(item => {
+          if (!item || seen.has(item)) {
+            return false;
+          }
+          seen.add(item);
+          return true;
+        });
+    }
+
+    function saveSettings() {
+      const settings = {
+        keywords: els.keywordInput.value,
+        codes: els.codeInput.value,
+        interval: els.intervalInput.value
+      };
+      localStorage.setItem(state.storageKey, JSON.stringify(settings));
+    }
+
+    function loadSettings() {
+      try {
+        const settings = JSON.parse(localStorage.getItem(state.storageKey) || "{}");
+        const storedKeywords = settings.keywords ? settings.keywords.split(/[,，\s]+/) : [];
+        const storedCodes = settings.codes ? settings.codes.split(/[,，\s]+/) : [];
+        els.keywordInput.value = mergeUnique(DEFAULT_KEYWORDS, storedKeywords).join(",");
+        els.codeInput.value = mergeUnique(DEFAULT_CODES, storedCodes)
+          .filter(code => !RETIRED_DEFAULT_CODES.includes(code))
+          .join(",");
+        if (settings.interval) {
+          els.intervalInput.value = settings.interval;
+        }
+      } catch (error) {
+        localStorage.removeItem(state.storageKey);
+      }
+    }
+
+    async function fetchWithJsonp(mode = "all") {
+      return new Promise((resolve, reject) => {
+        const callbackName = `eastmoneyCallback_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+        const script = document.createElement("script");
+        const timeout = window.setTimeout(() => {
+          cleanup();
+          reject(new Error("请求超时，请检查网络是否能访问东方财富。"));
+        }, 12000);
+
+        function cleanup() {
+          window.clearTimeout(timeout);
+          delete window[callbackName];
+          script.remove();
+        }
+
+        window[callbackName] = data => {
+          cleanup();
+          resolve(data);
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error("无法连接东方财富接口。"));
+        };
+
+        script.src = buildUrl(callbackName, mode);
+        document.head.appendChild(script);
+      });
+    }
+
+    async function fetchEtfData(mode = "all") {
+      try {
+        const response = await fetch(buildUrl(null, mode), {
+          method: "GET",
+          mode: "cors",
+          cache: "no-store"
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        return await fetchWithJsonp(mode);
+      }
+    }
+
+    async function fetchMergedEtfRows() {
+      const results = await Promise.allSettled([
+        fetchEtfData("all"),
+        fetchEtfData("tplus")
+      ]);
+
+      const rowMap = new Map();
+      const errors = [];
+
+      for (const result of results) {
+        if (result.status !== "fulfilled") {
+          errors.push(result.reason && result.reason.message ? result.reason.message : String(result.reason));
+          continue;
+        }
+
+        for (const row of findRowsInResponse(result.value)) {
+          const code = String(row.SECURITY_CODE || "").trim();
+          if (!code) {
+            continue;
+          }
+
+          const existing = rowMap.get(code);
+          if (!existing) {
+            rowMap.set(code, row);
+            continue;
+          }
+
+          const existingHasPremium = existing.PREMIUM_DISCOUNT_RATIO !== undefined && existing.PREMIUM_DISCOUNT_RATIO !== "-";
+          const nextHasPremium = row.PREMIUM_DISCOUNT_RATIO !== undefined && row.PREMIUM_DISCOUNT_RATIO !== "-";
+          if (!existingHasPremium && nextHasPremium) {
+            rowMap.set(code, row);
+          }
+        }
+      }
+
+      const rows = Array.from(rowMap.values());
+      if (!rows.length && errors.length) {
+        throw new Error(errors[0]);
+      }
+      return rows;
+    }
+
+    async function fetchSinaQuote(code) {
+      return new Promise((resolve, reject) => {
+        const marketCode = code.startsWith("5") ? `sh${code}` : `sz${code}`;
+        const script = document.createElement("script");
+        const varName = `hq_str_${marketCode}`;
+        const timeout = window.setTimeout(() => {
+          cleanup();
+          reject(new Error(`${code} 新浪行情超时`));
+        }, 10000);
+
+        function cleanup() {
+          window.clearTimeout(timeout);
+          script.remove();
+        }
+
+        script.onload = () => {
+          const raw = window[varName] || "";
+          cleanup();
+          if (!raw) {
+            reject(new Error(`${code} 新浪行情为空`));
+            return;
+          }
+
+          const parts = raw.split(",");
+          const price = toNumber(parts[3]);
+          const prevClose = toNumber(parts[2]);
+          const amount = toNumber(parts[9]);
+          const date = parts[30] || "";
+          const time = parts[31] || "";
+          resolve({
+            name: parts[0] || "",
+            price,
+            prevClose,
+            amount,
+            time: `${date} ${time}`.trim()
+          });
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error(`${code} 新浪行情失败`));
+        };
+
+        script.src = `https://hq.sinajs.cn/list=${marketCode}`;
+        document.head.appendChild(script);
+      });
+    }
+
+    async function fetchTiantianEstimate(code) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        const previousCallback = window.jsonpgz;
+        const timeout = window.setTimeout(() => {
+          cleanup();
+          reject(new Error(`${code} 天天基金估值超时`));
+        }, 10000);
+
+        function cleanup() {
+          window.clearTimeout(timeout);
+          window.jsonpgz = previousCallback;
+          script.remove();
+        }
+
+        window.jsonpgz = data => {
+          cleanup();
+          const estimate = toNumber(data && data.gsz);
+          if (estimate === null) {
+            reject(new Error(`${code} 天天基金估值为空`));
+            return;
+          }
+
+          resolve({
+            name: data.name || "",
+            estimate,
+            time: data.gztime || "",
+            pct: toNumber(data.gszzl)
+          });
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error(`${code} 天天基金估值失败`));
+        };
+
+        script.src = `https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
+        document.head.appendChild(script);
+      });
+    }
+
+    async function fillMissingPremiums(rows) {
+      const filled = [];
+
+      for (const row of rows) {
+        if (row.premiumPct !== null) {
+          filled.push(row);
+          continue;
+        }
+
+        try {
+          const quotePromise = row.lastPrice === null ? fetchSinaQuote(row.code) : Promise.resolve(null);
+          const estimatePromise = fetchTiantianEstimate(row.code);
+          const [quote, estimate] = await Promise.all([quotePromise, estimatePromise]);
+          const marketPrice = quote && quote.price !== null ? quote.price : row.lastPrice;
+          if (marketPrice === null || estimate.estimate === null || estimate.estimate <= 0) {
+            filled.push(row);
+            continue;
+          }
+
+          const premium = (marketPrice / estimate.estimate - 1) * 100;
+          const quoteTime = quote && quote.time ? quote.time : "";
+          const estimateTime = estimate.time ? estimate.time : "";
+
+          filled.push({
+            ...row,
+            name: row.name === "代码池基金" && estimate.name ? estimate.name : row.name,
+            lastPrice: marketPrice,
+            changePct: row.changePct,
+            amount: quote && quote.amount !== null ? quote.amount : row.amount,
+            discountPct: -premium,
+            premiumPct: premium,
+            source: "新浪行情 + 天天基金估算净值",
+            asOf: [quoteTime, estimateTime].filter(Boolean).join(" / "),
+            isPlaceholder: false,
+            isComputed: true
+          });
+        } catch (error) {
+          filled.push(row);
+          continue;
+        }
+      }
+
+      return filled.sort((a, b) => {
+        const left = a.premiumPct === null ? Number.POSITIVE_INFINITY : a.premiumPct;
+        const right = b.premiumPct === null ? Number.POSITIVE_INFINITY : b.premiumPct;
+        return left - right || String(a.code).localeCompare(String(b.code));
+      });
+    }
+
+    function findRowsInResponse(data) {
+      if (!data || typeof data !== "object") {
+        return [];
+      }
+
+      const candidates = [
+        data.result && data.result.data,
+        data.result && data.result.datas,
+        data.result && data.result.list,
+        data.data,
+        data.datas,
+        data.list
+      ];
+
+      for (const candidate of candidates) {
+        if (Array.isArray(candidate) && candidate.length) {
+          return candidate;
+        }
+      }
+
+      if (Array.isArray(data.result) && data.result.length) {
+        return data.result;
+      }
+
+      return [];
+    }
+
+    function describeResponse(data) {
+      if (!data || typeof data !== "object") {
+        return "接口返回的不是有效数据。";
+      }
+
+      const topKeys = Object.keys(data).join(", ") || "无字段";
+      const resultKeys = data.result && typeof data.result === "object"
+        ? Object.keys(data.result).join(", ")
+        : "无 result 字段";
+      const message = data.message || data.msg || data.error || "";
+      return `接口暂时没有给出可用 ETF 列表。返回字段：${topKeys}；result 字段：${resultKeys}${message ? `；提示：${message}` : ""}`;
+    }
+
+    function normalizeRows(rawRows) {
+      const keywords = getKeywords();
+      const codes = getCodes();
+      const rows = rawRows
+        .filter(row => {
+          const text = `${row.SECURITY_NAME_ABBR || ""} ${row.INDEX_NAME || ""} ${row.SECURITY_CODE || ""}`;
+          const code = String(row.SECURITY_CODE || "").trim();
+          const hitKeyword = keywords.some(keyword => text.toLowerCase().includes(keyword.toLowerCase()));
+          const hitCode = codes.includes(code);
+          return hitKeyword || hitCode;
+        })
+        .map(row => {
+          const discount = toNumber(row.PREMIUM_DISCOUNT_RATIO);
+          const normalized = {
+            code: row.SECURITY_CODE || "--",
+            name: row.SECURITY_NAME_ABBR || "--",
+            indexName: row.INDEX_NAME || "--",
+            lastPrice: toNumber(row.NEW_PRICE),
+            changePct: toNumber(row.CHANGE_RATE),
+            amount: row.DEAL_AMOUNT,
+            discountPct: discount,
+            premiumPct: discount === null ? null : -discount,
+            source: "东方财富",
+            asOf: "实时接口"
+          };
+          return enrichWithFallbackSnapshot(normalized);
+        })
+        .sort((a, b) => {
+          const left = a.premiumPct === null ? Number.POSITIVE_INFINITY : a.premiumPct;
+          const right = b.premiumPct === null ? Number.POSITIVE_INFINITY : b.premiumPct;
+          return left - right || String(a.code).localeCompare(String(b.code));
+        });
+
+      const existingCodes = new Set(rows.map(row => String(row.code)));
+      const missingRows = codes
+        .filter(code => !existingCodes.has(code))
+        .map(code => {
+          const known = KNOWN_FUNDS[code] || {};
+          const snapshot = HAOETF_SNAPSHOT[code];
+          if (snapshot) {
+            return {
+              code,
+              name: snapshot.name,
+              indexName: snapshot.indexName,
+              lastPrice: snapshot.lastPrice,
+              changePct: snapshot.changePct,
+              amount: snapshot.amount100M * 100000000,
+              discountPct: -snapshot.premiumPct,
+              premiumPct: snapshot.premiumPct,
+              source: snapshot.source,
+              asOf: snapshot.asOf,
+              isFallback: true
+            };
+          }
+          return {
+            code,
+            name: known.name || "代码池基金",
+            indexName: known.indexName || "纳斯达克相关",
+            lastPrice: null,
+            changePct: null,
+            amount: null,
+            discountPct: null,
+            premiumPct: null,
+            source: "无可用实时溢价源",
+            asOf: "--",
+            isPlaceholder: true
+          };
+        });
+
+      return [...rows, ...missingRows];
+    }
+
+    function enrichWithFallbackSnapshot(row) {
+      const snapshot = HAOETF_SNAPSHOT[row.code];
+      if (!snapshot || row.premiumPct !== null) {
+        return row;
+      }
+
+      return {
+        ...row,
+        name: row.name === "--" ? snapshot.name : row.name,
+        indexName: row.indexName === "--" ? snapshot.indexName : row.indexName,
+        lastPrice: row.lastPrice === null ? snapshot.lastPrice : row.lastPrice,
+        changePct: row.changePct === null ? snapshot.changePct : row.changePct,
+        amount: row.amount === null ? snapshot.amount100M * 100000000 : row.amount,
+        discountPct: -snapshot.premiumPct,
+        premiumPct: snapshot.premiumPct,
+        source: snapshot.source,
+        asOf: snapshot.asOf,
+        isFallback: true
+      };
+    }
+
+    function renderRows(rows) {
+      if (!rows.length) {
+        els.tbody.innerHTML = '<tr><td class="empty" colspan="10">没有匹配到纳斯达克相关 ETF，请检查关键词。</td></tr>';
+        return;
+      }
+
+      els.tbody.innerHTML = rows.map(row => {
+        const premiumClass = row.premiumPct === null ? "" : row.premiumPct >= 0 ? "positive" : "negative";
+        const changeClass = row.changePct === null ? "" : row.changePct >= 0 ? "positive" : "negative";
+        const note = row.isPlaceholder ? "（暂无可核验溢价率）" : "";
+        return `
+          <tr>
+            <td>${row.code}</td>
+            <td>${row.name}${note}</td>
+            <td>${row.indexName}</td>
+            <td>${formatNumber(row.lastPrice)}</td>
+            <td class="${changeClass}">${formatPct(row.changePct)}</td>
+            <td>${formatAmount(row.amount)}</td>
+            <td>${formatPct(row.discountPct)}</td>
+            <td class="${premiumClass}">${formatPct(row.premiumPct)}</td>
+            <td>${row.source || "--"}<br>${row.asOf || "--"}</td>
+            <td>${makeRowAdvice(row)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function makeRowAdvice(row) {
+      if (row.premiumPct === null) {
+        return "未取得可核验溢价率，不建议凭这一行买卖。需要等数据源返回或查看基金公告。";
+      }
+
+      const amount = toNumber(row.amount);
+      const amountText = amount === null ? "成交额未知" : `成交额约 ${(amount / 100000000).toFixed(2)} 亿`;
+
+      if (row.premiumPct <= 0) {
+        return `可优先观察定投。当前无溢价或折价，${amountText}，比追高更舒服。`;
+      }
+      if (row.premiumPct <= 0.5) {
+        return `适合定投观察。溢价较低，${amountText}，可小额分批，不建议一次性重仓。`;
+      }
+      if (row.premiumPct <= 1.5) {
+        return `中性。可以继续原计划定投，但加仓节奏放慢，优先等溢价回落。`;
+      }
+      if (row.premiumPct <= 3) {
+        return `偏贵。谨慎加仓，短线资金不宜追，已有仓位以观察为主。`;
+      }
+      return `溢价过高。一般不建议新增买入，已有仓位注意溢价回落风险。`;
+    }
+
+    function renderMetrics(rows) {
+      els.countMetric.textContent = String(rows.length);
+      const premiums = rows.map(row => row.premiumPct).filter(value => value !== null);
+      if (!premiums.length) {
+        els.minMetric.textContent = "--";
+        els.maxMetric.textContent = "--";
+        return;
+      }
+      els.minMetric.textContent = formatPct(Math.min(...premiums));
+      els.maxMetric.textContent = formatPct(Math.max(...premiums));
+    }
+
+    function renderAnalysis(rows) {
+      if (!rows.length) {
+        els.fundamentalText.textContent = "没有数据，暂时无法分析。";
+        els.policyText.textContent = "没有数据，暂时无法分析。";
+        els.liquidityText.textContent = "没有数据，暂时无法分析。";
+        els.suggestionText.textContent = "请先刷新出 ETF 列表。";
+        return;
+      }
+
+      const premiums = rows.map(row => row.premiumPct).filter(value => value !== null);
+      const changes = rows.map(row => row.changePct).filter(value => value !== null);
+      const amounts = rows.map(row => toNumber(row.amount)).filter(value => value !== null);
+      const avgPremium = premiums.length ? premiums.reduce((sum, value) => sum + value, 0) / premiums.length : null;
+      const avgChange = changes.length ? changes.reduce((sum, value) => sum + value, 0) / changes.length : null;
+      const totalAmount = amounts.reduce((sum, value) => sum + value, 0);
+      const best = rows.find(row => row.premiumPct !== null) || rows[0];
+      const highPremiumCount = rows.filter(row => row.premiumPct !== null && row.premiumPct >= 2).length;
+      const lowPremiumCount = rows.filter(row => row.premiumPct !== null && row.premiumPct <= 0.5).length;
+
+      els.fundamentalText.textContent = avgChange === null
+        ? "当前接口没有返回涨跌幅，无法从页面内判断盈利预期是否正在改善。"
+        : `最新可靠消息显示，纳斯达克 100 一季报盈利仍较强，AI 和大型科技股盈利是基本面支撑。今日本页相关 ETF 平均涨跌幅约 ${formatPct(avgChange)}；若价格上涨同时溢价扩大，说明场内买盘可能过热。`;
+
+      els.policyText.textContent = "政策面目前不是单边利好。美联储最新公开信息显示利率仍维持在 3.50% - 3.75%，并继续盯住通胀；若降息预期推迟，纳斯达克估值会承压。国内 QDII 额度、限购和监管变化也会直接影响场内溢价。";
+
+      els.liquidityText.textContent = totalAmount > 0
+        ? `资金面看两件事：一是跨境 ETF 是否被抢购，二是本身成交是否活跃。本页匹配产品合计成交额约 ${(totalAmount / 100000000).toFixed(2)} 亿。优先看成交额较大、溢价率较低的品种，买卖价差和冲击成本通常更可控。`
+        : "当前接口没有返回成交额。没有流动性数据时，不建议只凭溢价率排序做决定。";
+
+      if (avgPremium === null) {
+        els.suggestionText.textContent = "缺少溢价率数据，暂时只适合观察，不适合据此操作。";
+      } else if (avgPremium <= 0.5 && lowPremiumCount > 0) {
+        els.suggestionText.textContent = `整体溢价不高，最低的是 ${best.code} ${best.name}，溢价率 ${formatPct(best.premiumPct)}。若你本来就计划长期定投，可优先观察低溢价、成交额较大的品种，分批进行比一次性追高更稳。`;
+      } else if (avgPremium <= 2) {
+        els.suggestionText.textContent = `整体溢价处于中性区间，最低的是 ${best.code} ${best.name}，溢价率 ${formatPct(best.premiumPct)}。可以继续定投，但加仓宜放慢节奏，优先等溢价回落或选择更低溢价品种。`;
+      } else {
+        els.suggestionText.textContent = `整体溢价偏高，已有 ${highPremiumCount} 只产品溢价率达到 2% 或以上。此时不适合盲目加仓；已有仓位可考虑降低追涨，短线资金更应警惕溢价回落风险。`;
+      }
+    }
+
+    async function refresh() {
+      els.status.textContent = "正在获取数据...";
+      els.refreshBtn.disabled = true;
+
+      try {
+        const rawRows = await fetchMergedEtfRows();
+        if (!rawRows.length) {
+          throw new Error("多个 ETF 数据接口都没有返回可用列表。");
+        }
+
+        const rows = await fillMissingPremiums(normalizeRows(rawRows));
+        renderRows(rows);
+        renderMetrics(rows);
+        renderAnalysis(rows);
+        els.status.textContent = `已刷新：${new Date().toLocaleString()}`;
+      } catch (error) {
+        els.tbody.innerHTML = `<tr><td class="error" colspan="10">${error.message}</td></tr>`;
+        renderMetrics([]);
+        renderAnalysis([]);
+        els.status.textContent = "刷新失败";
+      } finally {
+        els.refreshBtn.disabled = false;
+      }
+    }
+
+    function setAutoRefresh(enabled) {
+      state.auto = enabled;
+      window.clearInterval(state.timer);
+      state.timer = null;
+      els.autoBtn.textContent = enabled ? "关闭自动刷新" : "开启自动刷新";
+      els.autoBtn.classList.toggle("secondary", !enabled);
+
+      if (enabled) {
+        const seconds = Math.max(5, Number(els.intervalInput.value) || 15);
+        els.intervalInput.value = String(seconds);
+        state.timer = window.setInterval(refresh, seconds * 1000);
+        refresh();
+      }
+    }
+
+    els.refreshBtn.addEventListener("click", refresh);
+    els.autoBtn.addEventListener("click", () => setAutoRefresh(!state.auto));
+    els.intervalInput.addEventListener("change", () => {
+      saveSettings();
+      if (state.auto) {
+        setAutoRefresh(true);
+      }
+    });
+    els.keywordInput.addEventListener("change", saveSettings);
+    els.codeInput.addEventListener("change", saveSettings);
+
+    loadSettings();
+    refresh();
+  </script>
+</body>
+</html>
